@@ -125,12 +125,12 @@ class Matrix
      * @param integer|float|double $divisor The divisor
      * @param bool $onlyCalculate If true only the result will be returned, otherwise the matrix data gets updated
      * @return array The result data
-     * @throws \DivisionByZeroError
+     * @throws \Exception
      */
     public function scalarDivide($divisor, $onlyCalculate = false)
     {
         if ($divisor == 0) {
-            throw new \DivisionByZeroError('Divisor must not be zero');
+            throw new \Exception('Divisor must not be zero');
         }
 
         $resultData = $this->scalarMatrixOperation(function ($matrixEntry) use ($divisor) {

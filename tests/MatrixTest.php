@@ -256,7 +256,7 @@ class MatrixTest extends TestCase
             [4, 5, 6],
         ]);
 
-        $this->expectException(\DivisionByZeroError::class);
+        $this->expectException(\Exception::class);
         $this->expectExceptionMessage('Divisor must not be zero');
         $matrix->scalarDivide(0);
     }
