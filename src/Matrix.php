@@ -14,7 +14,7 @@ namespace Devtronic\Morpheus;
  * Matrix Class
  * @package Devtronic\Morpheus
  */
-class Matrix
+class Matrix implements \ArrayAccess, \Iterator
 {
     /** @var array The Matrix Data */
     protected $data = [];
@@ -24,6 +24,10 @@ class Matrix
 
     /** @var int Number of columns in the matrix */
     protected $columnCount = 0;
+
+    //#region Iterator members
+    private $position = 0;
+    //#endregion
 
     /**
      * Matrix constructor.
@@ -71,10 +75,13 @@ class Matrix
     }
 
     /**
-     * Multiplies another matrix
+     * Multiplies another matrix with this matrix
+     *
      * @param Matrix $matrix The Matrix to multiply
      * @param bool $onlyCalculate If true only the result will be returned, otherwise the matrix data gets updated
      * @return array The result data
+     *
+     * @throws \Exception If the row count of the matrix and the column count of this matrix does not match
      */
     public function multiply(Matrix $matrix, $onlyCalculate = false)
     {
@@ -300,4 +307,74 @@ class Matrix
     {
         return $this->columnCount;
     }
+
+    //#region \ArrayAccess implementation
+
+    /** @inheritdoc */
+    public function offsetExists($offset)
+    {
+        return array_key_exists($offset, $this->data);
+    }
+
+    /** @inheritdoc */
+    public function offsetGet($offset)
+    {
+        return $this->data[$offset];
+    }
+
+    /** @inheritdoc */
+    public function offsetSet($offset, $value)
+    {
+        if (!is_int($offset)) {
+            throw new \InvalidArgumentException('The offset must be an integer');
+        } elseif ($offset >= $this->rowCount || $offset < 0) {
+            throw new \InvalidArgumentException('The offset must be between 0 and the row count');
+        } elseif (!is_array($value)) {
+            throw new \InvalidArgumentException('The value must be an array');
+        } elseif (count($value) != $this->columnCount) {
+            throw new \InvalidArgumentException('The count must equals the column count');
+        }
+
+        $this->data[$offset] = $value;
+    }
+
+    /** @inheritdoc */
+    public function offsetUnset($offset)
+    {
+        throw new \LogicException('Unsetting parts of a matrix is not supported');
+    }
+    //#endregion
+
+    //#region \Iterator implementation
+
+    /** @inheritdoc */
+    public function current()
+    {
+        return $this->data[$this->position];
+    }
+
+    /** @inheritdoc */
+    public function next()
+    {
+        ++$this->position;
+    }
+
+    /** @inheritdoc */
+    public function key()
+    {
+        return $this->position;
+    }
+
+    /** @inheritdoc */
+    public function valid()
+    {
+        return isset($this->data[$this->position]);
+    }
+
+    /** @inheritdoc */
+    public function rewind()
+    {
+        $this->position = 0;
+    }
+    //#endregion
 }

@@ -61,20 +61,26 @@ class MatrixTest extends TestCase
     public function testIsValid()
     {
         $matrix = new Matrix();
-        $this->assertTrue($this->invokeMethod($matrix, 'isValid', [[
-            [1, 2, 3],
-            [4, 5, 6],
-        ]]));
+        $this->assertTrue($this->invokeMethod($matrix, 'isValid', [
+            [
+                [1, 2, 3],
+                [4, 5, 6],
+            ]
+        ]));
 
-        $this->assertFalse($this->invokeMethod($matrix, 'isValid', [[
-            [1, 2],
-            [4, 5, 6],
-        ]]));
+        $this->assertFalse($this->invokeMethod($matrix, 'isValid', [
+            [
+                [1, 2],
+                [4, 5, 6],
+            ]
+        ]));
 
-        $this->assertFalse($this->invokeMethod($matrix, 'isValid', [[
-            1,
-            [4, 5, 6],
-        ]]));
+        $this->assertFalse($this->invokeMethod($matrix, 'isValid', [
+            [
+                1,
+                [4, 5, 6],
+            ]
+        ]));
 
         $this->assertFalse($this->invokeMethod($matrix, 'isValid', [1]));
     }
@@ -372,6 +378,128 @@ class MatrixTest extends TestCase
         $this->assertSame($expected, $matrix->getData());
     }
 
+    public function testArrayAccess()
+    {
+        $matrix = new Matrix([
+            [1, 2, 3],
+            [4, 5, 6],
+            [7, 8, 9],
+        ]);
+
+        // offsetExists
+        $this->assertTrue(isset($matrix[0]));
+        $this->assertFalse(isset($matrix[-1]));
+        $this->assertTrue(isset($matrix[-0]));
+        $this->assertFalse(isset($matrix[-2]));
+
+        // offsetGet
+        $this->assertEquals(1, $matrix[0][0]);
+        $this->assertEquals(5, $matrix[1][1]);
+        $this->assertEquals(9, $matrix[2][2]);
+
+        // offsetSet
+        $matrix[0] = [3, 2, 1];
+        $this->assertEquals([3, 2, 1], $matrix[0]);
+    }
+
+    public function testOffsetSetFailsNotAnInteger()
+    {
+        $matrix = new Matrix([
+            [1, 2, 3],
+            [4, 5, 6],
+            [7, 8, 9],
+        ]);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('The offset must be an integer');
+        $matrix['asdf'] = 'foobar';
+    }
+
+    public function testOffsetSetFailsOffsetBelowZero()
+    {
+        $matrix = new Matrix([
+            [1, 2, 3],
+            [4, 5, 6],
+            [7, 8, 9],
+        ]);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('The offset must be between 0 and the row count');
+        $matrix[-1] = 1;
+    }
+
+    public function testOffsetSetFailsOffsetOverRowCount()
+    {
+        $matrix = new Matrix([
+            [1, 2, 3],
+            [4, 5, 6],
+            [7, 8, 9],
+        ]);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('The offset must be between 0 and the row count');
+        $matrix[3] = 1;
+    }
+
+    public function testOffsetSetFailsValueNotAnArray()
+    {
+        $matrix = new Matrix([
+            [1, 2, 3],
+            [4, 5, 6],
+            [7, 8, 9],
+        ]);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('The value must be an array');
+        $matrix[1] = 1;
+    }
+
+    public function testOffsetSetFailsValueCountDoesNotMatch()
+    {
+        $matrix = new Matrix([
+            [1, 2, 3],
+            [4, 5, 6],
+            [7, 8, 9],
+        ]);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('The count must equals the column count');
+        $matrix[1] = [1];
+    }
+
+    public function testOffsetUnsetFails()
+    {
+        $matrix = new Matrix([
+            [1, 2, 3],
+            [4, 5, 6],
+            [7, 8, 9],
+        ]);
+
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage('Unsetting parts of a matrix is not supported');
+        unset($matrix[1]);
+    }
+
+    public function testIteratorImplementation()
+    {
+        $matrix = new Matrix([
+            [1, 2, 3],
+            [4, 5, 6],
+            [7, 8, 9],
+        ]);
+
+        $this->assertEquals(0, $matrix->key());
+        foreach ($matrix as $k => $value){
+            $this->assertEquals($k, $matrix->key());
+            $this->assertEquals($matrix[$k], $value);
+            $this->assertEquals($matrix[$k], $matrix->current());
+        }
+        $this->assertEquals(3, $matrix->key());
+
+        $matrix->rewind();
+        $this->assertEquals(0, $matrix->key());
+    }
+
     /**
      * Call protected/private method of a class.
      *
@@ -383,10 +511,15 @@ class MatrixTest extends TestCase
      */
     public function invokeMethod(&$object, $methodName, array $parameters = array())
     {
-        $reflection = new \ReflectionClass(get_class($object));
-        $method = $reflection->getMethod($methodName);
-        $method->setAccessible(true);
+        $result = null;
+        try {
+            $reflection = new \ReflectionClass(get_class($object));
+            $method = $reflection->getMethod($methodName);
+            $method->setAccessible(true);
+            $result = $method->invokeArgs($object, $parameters);
+        } catch (\ReflectionException $e) {
+        }
 
-        return $method->invokeArgs($object, $parameters);
+        return $result;
     }
 }
