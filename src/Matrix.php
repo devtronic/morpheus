@@ -165,6 +165,16 @@ class Matrix implements \ArrayAccess, \Iterator
     }
 
     /**
+     * Calculates the sum of the matrix
+     *
+     * @return integer The sum
+     */
+    public function sum()
+    {
+        return array_sum(array_map('array_sum', $this->data));
+    }
+
+    /**
      * Performs an operation on two same-size matrices
      *
      * @param Matrix $matrixB The other matrix

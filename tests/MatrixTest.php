@@ -241,7 +241,6 @@ class MatrixTest extends TestCase
 
     public function testScalarDivide()
     {
-
         $matrix = new Matrix([
             [1, 2, 3],
             [4, 5, 6],
@@ -378,6 +377,17 @@ class MatrixTest extends TestCase
         $this->assertSame($expected, $matrix->getData());
     }
 
+    public function testSum()
+    {
+        $matrix = new Matrix([
+            [1, 2, 3],
+            [4, 5, 6],
+            [7, 8, 9],
+        ]);
+
+        $this->assertEquals(45, $matrix->sum());
+    }
+
     public function testArrayAccess()
     {
         $matrix = new Matrix([
@@ -489,7 +499,7 @@ class MatrixTest extends TestCase
         ]);
 
         $this->assertEquals(0, $matrix->key());
-        foreach ($matrix as $k => $value){
+        foreach ($matrix as $k => $value) {
             $this->assertEquals($k, $matrix->key());
             $this->assertEquals($matrix[$k], $value);
             $this->assertEquals($matrix[$k], $matrix->current());
